@@ -11,10 +11,8 @@ import cherrypy
 import os
 # 導入 random 模組
 import random
-import math
-from cherrypy.lib.static import serve_file
 # 導入 gear 模組
-#import gear
+import gear
 import man
 import man2
 
@@ -31,46 +29,20 @@ else:
     download_root_dir = _curdir + "/local_data/"
     data_dir = _curdir + "/local_data/"
 
-
-def downloadlist_access_list(files, starti, endi):
-    # different extension files, associated links were provided
-    # popup window to view images, video or STL files, other files can be downloaded directly
-    # files are all the data to list, from starti to endi
-    # add file size
-    outstring = ""
-    for index in range(int(starti)-1, int(endi)):
-        fileName, fileExtension = os.path.splitext(files[index])
-        fileExtension = fileExtension.lower()
-        fileSize = sizeof_fmt(os.path.getsize(download_root_dir+"downloads/"+files[index]))
-        # images files
-        if fileExtension == ".png" or fileExtension == ".jpg" or fileExtension == ".gif":
-            outstring += '<input type="checkbox" name="filename" value="'+files[index]+'"><a href="javascript:;" onClick="window.open(\'/downloads/'+ \
-            files[index]+'\',\'images\', \'catalogmode\',\'scrollbars\')">'+files[index]+'</a> ('+str(fileSize)+')<br />'
-        # stl files
-        elif fileExtension == ".stl":
-            outstring += '<input type="checkbox" name="filename" value="'+files[index]+'"><a href="javascript:;" onClick="window.open(\'/static/viewstl.html?src=/downloads/'+ \
-            files[index]+'\',\'images\', \'catalogmode\',\'scrollbars\')">'+files[index]+'</a> ('+str(fileSize)+')<br />'
-        # flv files
-        elif fileExtension == ".flv":
-            outstring += '<input type="checkbox" name="filename" value="'+files[index]+'"><a href="javascript:;" onClick="window.open(\'/flvplayer?filepath=/downloads/'+ \
-            files[index]+'\',\'images\', \'catalogmode\',\'scrollbars\')">'+files[index]+'</a> ('+str(fileSize)+')<br />'
-        # direct download files
-        else:
-            outstring += "<input type='checkbox' name='filename' value='"+files[index]+"'><a href='/download/?filepath="+download_root_dir.replace('\\', '/')+ \
-            "downloads/"+files[index]+"'>"+files[index]+"</a> ("+str(fileSize)+")<br />"
-    return outstring
-def sizeof_fmt(num):
-    for x in ['bytes','KB','MB','GB']:
-        if num < 1024.0:
-            return "%3.1f%s" % (num, x)
-        num /= 1024.0
-    return "%3.1f%s" % (num, 'TB')
+'''以下為近端 input() 與 for 迴圈應用的程式碼, 若要將程式送到 OpenShift 執行, 除了採用 CherryPy 網際框架外, 還要轉為 html 列印
+# 利用 input() 取得的資料型別為字串
+toprint = input("要印甚麼內容?")
+# 若要將 input() 取得的字串轉為整數使用, 必須利用 int() 轉換
+repeat_no = int(input("重複列印幾次?"))
+for i in range(repeat_no):
+    print(toprint)
+'''
 ################# (3) 程式類別定義區
 # 以下改用 CherryPy 網際框架程式架構
 # 以下為 Hello 類別的設計內容, 其中的 object 使用, 表示 Hello 類別繼承 object 的所有特性, 包括方法與屬性設計
-class Midterm(object):
+class Hello(object):
 
-    # Midterm 類別的啟動設定
+    # Hello 類別的啟動設定
     _cp_config = {
     'tools.encode.encoding': 'utf-8',
     'tools.sessions.on' : True,
@@ -83,30 +55,47 @@ class Midterm(object):
     }
 
     def __init__(self):
-        # hope to create downloads and images directories　
-        if not os.path.isdir(download_root_dir+"downloads"):
-            try:
-                os.makedirs(download_root_dir+"downloads")
-            except:
-                print("mkdir error")
-        if not os.path.isdir(download_root_dir+"images"):
-            try:
-                os.makedirs(download_root_dir+"images")
-            except:
-                print("mkdir error")
-        if not os.path.isdir(download_root_dir+"tmp"):
-            try:
-                os.makedirs(download_root_dir+"tmp")
-            except:
-                print("mkdir error")
+        # 配合透過案例啟始建立所需的目錄
+        if not os.path.isdir(data_dir+'/tmp'):
+            os.mkdir(data_dir+'/tmp')
+        if not os.path.isdir(data_dir+"/downloads"):
+            os.mkdir(data_dir+"/downloads")
+        if not os.path.isdir(data_dir+"/images"):
+            os.mkdir(data_dir+"/images")
+    # 以 @ 開頭的 cherrypy.expose 為 decorator, 用來表示隨後的成員方法, 可以直接讓使用者以 URL 連結執行
+    @cherrypy.expose
+    # index 方法為 CherryPy 各類別成員方法中的內建(default)方法, 當使用者執行時未指定方法, 系統將會優先執行 index 方法
+    # 有 self 的方法為類別中的成員方法, Python 程式透過此一 self 在各成員方法間傳遞物件內容
+    def index_orig(self, toprint="Hello World!"):
+        return toprint
+    @cherrypy.expose
+    def hello(self, toprint="Hello World!"):
+        return toprint
     # 以 @ 開頭的 cherrypy.expose 為 decorator, 用來表示隨後的成員方法, 可以直接讓使用者以 URL 連結執行
     @cherrypy.expose
     # index 方法為 CherryPy 各類別成員方法中的內建(default)方法, 當使用者執行時未指定方法, 系統將會優先執行 index 方法
     # 有 self 的方法為類別中的成員方法, Python 程式透過此一 self 在各成員方法間傳遞物件內容
     def index(self):
         outstring = '''
-        <!DOCTYPE html> 
-        <html>
+    <!DOCTYPE html> 
+    <html>
+    <title>2015cda_g1</title>
+    </head>
+    <body>
+    <Select Size=1 onChange="window.open(this.value)">
+        <option>2015cda_g1齒輪</option>
+        <option value="http://40223101.gitbooks.io/2015cda_g1/content/" style="color:red;font-weight:bold" >小組 G i t b o o k</option>
+        <option value="https://waffle.io/40223101/2015cda_g1" style="color:Green;font-weight:bold" >小組 W a f f l e . i o</option>
+        <optgroup label="組長">
+        <option value="https://github.com/40223101/2015cda_g1" style="color:blue;font-weight:bold" >40223101王汎亦</option>
+    </optgroup>
+    <optgroup label="組員">
+        <option value="https://github.com/xindus40223115/2015cda_g1"+<option value="https://github.com/xindus40223115/2015cda_g1" style="background-color: #CCFFFF;" >40223115吳欣融</option>
+        <option value="https://github.com/40223117cda/cda" style="background-color: #CCFF66;" >40223117李曜州</option>
+        <option value="https://github.com/40223119/2015cda" style="background-color: #FFFF66;" >40223119易柏翔</option>
+        <option value="https://github.com/40223136/40223136cad" style="background-color: #FFCC66;">40223136黃金振</option>
+        <option value="https://github.com/40023256/2015cad" style="background-color: #FF9966;" >40023256蕭閔鍵</option>
+    </Select><br />
         <head>
         <meta http-equiv="content-type" content="text/html;charset=utf-8">
         </head>
@@ -115,6 +104,7 @@ class Midterm(object):
         <a href="drawspur">drawspur</a><br />
         <a href="fileuploadform">上傳檔案</a><br />
         <a href="download_list">列出上傳檔案</a><br />
+        <a href="man">機器人自動組立</a><br />
         </body>
         </html>
         '''
@@ -171,19 +161,27 @@ class Midterm(object):
         
     @cherrypy.expose
     # N 為齒數, M 為模數, P 為壓力角
-    def drawspur(self, N=20, M=5, P=15):
+    def drawspur(self,m=None, p=None,z=None,x=None,c=None,v=None,b=None,d=None):
         outstring = '''
     <!DOCTYPE html> 
     <html>
-    <head>
-    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <title>2015cda_g1</title>
     </head>
     <body>
-        
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>    
     <form method=POST action=drawspuraction>
-    齒數:<input type=text name=N value='''+str(N)+'''><br />
-    模數:<input type=text name=M value = '''+str(M)+'''><br />
-    壓力角:<input type=text name=P value = '''+str(P)+'''><br />
+    繪製第1齒數:<input type=text name=z><br />
+    繪製第2齒數:<input type=text name=x><br />
+    繪製第3齒數:<input type=text name=c><br />
+    繪製第4齒數:<input type=text name=v><br />
+    繪製第5齒數:<input type=text name=b><br />
+    繪製第6齒數:<input type=text name=d><br />
+    壓力角:<input type=text name=p><br />
+    模數:<input type=text name=m><br />
     <input type=submit value=畫出正齒輪輪廓>
     </form>
     <br /><a href="index">index</a><br />
@@ -201,16 +199,33 @@ class Midterm(object):
         return outstring
     @cherrypy.expose
     # N 為齒數, M 為模數, P 為壓力角
-    def drawspuraction(self, N=20, M=5, P=15):
+    def drawspuraction(self,m=None, p=None,z=None,x=None,c=None,v=None,b=None,d=None):
         outstring = '''
     <!DOCTYPE html> 
     <html>
     <head>
-    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <title>2015cda_g1</title>
     </head>
     <body>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
+    <form method=POST action=drawspuraction>
+    繪製第1齒數:'''+str(z)+'''<br />
+    繪製第2齒數:'''+str(x)+'''<br />
+    繪製第3齒數:'''+str(c)+'''<br />
+    繪製第4齒數:'''+str(v)+'''<br />
+    繪製第5齒數:'''+str(b)+'''<br />
+    繪製第6齒數:'''+str(d)+'''<br />
+    壓力角:'''+str(p)+'''<br />
+    模數:'''+str(m)+'''<br />
     <a href="index">index</a><br />
-        
+    </form>
+    </head>
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
     <!-- 以下為 canvas 畫圖程式 -->
     <script type="text/python">
     # 從 browser 導入 document
@@ -223,143 +238,891 @@ class Midterm(object):
     canvas = document["plotarea"]
     ctx = canvas.getContext("2d")
 
-    # 以下利用 spur.py 程式進行繪圖
-    # N 為齒數
-    N = '''+str(N)+'''
-    # M 為模數
-    M = '''+str(M)+'''
-    # 壓力角 P 單位為角度
-    P = '''+str(P)+'''
+    # 以下利用 spur.py 程式進行繪圖, 接下來的協同設計運算必須要配合使用者的需求進行設計運算與繪圖
+    # 其中並將工作分配給其他組員建立類似 spur.py 的相關零件繪圖模組
+    # midx, midy 為齒輪圓心座標, rp 為節圓半徑, n 為齒數, pa 為壓力角, color 為線的顏色
+    # Gear(midx, midy, rp, n=20, pa=20, color="black"):
+    # 模數決定齒的尺寸大小, 囓合齒輪組必須有相同的模數與壓力角
+    # 壓力角 pa 單位為角度
+    pa ='''+str(p)+'''
+    # m 為模數
+    m = '''+str(m)+'''
+    # 第1齒輪齒數
+    n_g1 = '''+str(z)+'''
+    # 第2齒輪齒數
+    n_g2 = '''+str(x)+'''
+    # 第3齒輪齒數
+    n_g3 = '''+str(c)+'''
+    # 第4齒輪齒數
+    n_g4 = '''+str(v)+'''
+    # 第5齒輪齒數
+    n_g5 = '''+str(b)+'''
+    # 第6齒輪齒數
+    n_g6 = '''+str(d)+'''
     # 計算兩齒輪的節圓半徑
-    rp = N*M/2
+    rp_g1 = m*n_g1/2
+    rp_g2 = m*n_g2/2
+    rp_g3 = m*n_g3/2
+    rp_g4 = m*n_g4/2
+    rp_g5 = m*n_g5/2
+    rp_g6 = m*n_g6/2
 
-    spur.Spur(ctx).Gear(600, 600, rp, N, P, "blue")
+    # 繪圖第1齒輪的圓心座標
+    x_g1 = 400
+    y_g1 = 400
+    # 第2齒輪的圓心座標, 假設排列成水平, 表示各齒輪圓心 y 座標相同
+    x_g2 = x_g1 + rp_g1 + rp_g2
+    y_g2 = y_g1
+    # 第3齒輪的圓心座標
+    x_g3 = x_g1 + rp_g1 + 2*rp_g2 + rp_g3
+    y_g3 = y_g1
+    # 第4齒輪的圓心座標
+    x_g4 = x_g1 + rp_g1 +2*rp_g2+ 2*rp_g3 +rp_g4
+    y_g4 = y_g1
+    # 第5齒輪的圓心座標
+    x_g5 = x_g1 + rp_g1 +2*rp_g2+2* rp_g3 +2*rp_g4+rp_g5
+    y_g5 = y_g1
+    # 第6齒輪的圓心座標
+    x_g6 = x_g1 + rp_g1 +2*rp_g2+ 2*rp_g3 +2*rp_g4+2*rp_g5+rp_g6
+    y_g6 = y_g1
+    # 將第1齒輪順時鐘轉 90 度
+    # 使用 ctx.save() 與 ctx.restore() 以確保各齒輪以相對座標進行旋轉繪圖
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g1, y_g1)
+    # rotate to engage
+    ctx.rotate(pi/2)
+    # put it back
+    ctx.translate(-x_g1, -y_g1)
+    spur.Spur(ctx).Gear(x_g1, y_g1, rp_g1, n_g1, pa, "blue")
+    ctx.restore()
 
+    # 將第2齒輪逆時鐘轉 90 度之後, 再多轉一齒, 以便與第1齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g2, y_g2)
+    # rotate to engage
+    ctx.rotate(-pi/2-pi/n_g2)
+    # put it back
+    ctx.translate(-x_g2, -y_g2)
+    spur.Spur(ctx).Gear(x_g2, y_g2, rp_g2, n_g2, pa, "black")
+    ctx.restore()
+
+    # 將第3齒輪逆時鐘轉 90 度之後, 再往回轉第2齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g3, y_g3)
+    # rotate to engage
+    # pi+pi/n_g2 為第2齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第3齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g3 則是第3齒與第2齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g2)*n_g2/n_g3 則是第2齒原定位線為順時鐘轉動 90 度, 
+    # 但是第2齒輪為了與第1齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第2齒輪的一齒角度, 因為要帶動第3齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g3
+    ctx.rotate(-pi/2-pi/n_g3+(pi+pi/n_g2)*n_g2/n_g3)
+    # put it back
+    ctx.translate(-x_g3, -y_g3)
+    spur.Spur(ctx).Gear(x_g3, y_g3, rp_g3, n_g3, pa, "red")
+    ctx.restore()
+
+    # 將第4齒輪逆時鐘轉 90 度之後, 再往回轉第1齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g4, y_g4)
+    # rotate to engage
+    # pi+pi/n_g3 為第3齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第4齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g4 則是第4齒與第3齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g3)*n_g3/n_g4 則是第3齒原定位線為順時鐘轉動 90 度, 
+    # 但是第4齒輪為了與第3齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第3齒輪的一齒角度, 因為要帶動第4齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g4
+    ctx.rotate(-pi/2-pi/n_g4+(pi+pi/n_g3-(pi+pi/n_g2)*n_g2/n_g3)*n_g3/n_g4)
+    # put it back
+    ctx.translate(-x_g4, -y_g4)
+    spur.Spur(ctx).Gear(x_g4, y_g4, rp_g4, n_g4, pa, "Orange")
+    ctx.restore()
+    # 按照上面三個正齒輪的囓合轉角運算, 隨後的傳動齒輪轉角便可依此類推, 完成6個齒輪的囓合繪圖
+
+    # 將第5齒輪逆時鐘轉 90 度之後, 再往回轉第2齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g5, y_g5)
+    # rotate to engage
+    # pi+pi/n_g 為第2齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第3齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g5 則是第3齒與第2齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g4)*n_g4/n_g5 則是第2齒原定位線為順時鐘轉動 90 度, 
+    # 但是第2齒輪為了與第1齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第2齒輪的一齒角度, 因為要帶動第3齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g5
+    ctx.rotate(-pi/2-pi/n_g5+(pi+pi/n_g4-(pi+pi/n_g3-(pi+pi/n_g2)*n_g2/n_g3)*n_g3/n_g4)*n_g4/n_g5)
+    # put it back
+    ctx.translate(-x_g5, -y_g5)
+    spur.Spur(ctx).Gear(x_g5, y_g5, rp_g5, n_g5, pa, "green")
+    ctx.restore()
+    # 按照上面三個正齒輪的囓合轉角運算, 隨後的傳動齒輪轉角便可依此類推, 完成6個齒輪的囓合繪圖
+
+    # 將第6齒輪逆時鐘轉 90 度之後, 再往回轉第2齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g6, y_g6)
+    # rotate to engage
+    # pi+pi/n_g 為第2齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第3齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g6 則是第3齒與第2齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g4)*n_g5/n_g6 則是第2齒原定位線為順時鐘轉動 90 度, 
+    # 但是第2齒輪為了與第1齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第2齒輪的一齒角度, 因為要帶動第3齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g6
+    ctx.rotate(-pi/2-pi/n_g6+(pi+pi/n_g5-(pi+pi/n_g4-(pi+pi/n_g3-(pi+pi/n_g2)*n_g2/n_g3)*n_g3/n_g4)*n_g4/n_g5)*n_g5/n_g6)
+    # put it back
+    ctx.translate(-x_g6, -y_g6)
+    spur.Spur(ctx).Gear(x_g6, y_g6, rp_g6, n_g6, pa, "Purple")
+    ctx.restore()
+    # 按照上面三個正齒輪的囓合轉角運算, 隨後的傳動齒輪轉角便可依此類推, 完成6個齒輪的囓合繪圖
     </script>
-    <canvas id="plotarea" width="1200" height="1200"></canvas>
-    <!-- 載入 brython.js -->
-    <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
-    <script>
-    window.onload=function(){
-    brython();
-    }
-    </script>
+    <canvas id="plotarea" width="3000" height="3000"></canvas>
     </body>
     </html>
     '''
 
         return outstring
     @cherrypy.expose
-    # W 為正方體的邊長
-    def cube(self, W=10):
+    # N 為齒數, M 為模數, P 為壓力角
+    def twoDgear(self, N=20, M=5, P=15):
         outstring = '''
     <!DOCTYPE html> 
     <html>
     <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
     </head>
-    <body>
-    <!-- 使用者輸入表單的參數交由 cubeaction 方法處理 -->
-    <form method=POST action=cubeaction>
-    正方體邊長:<input type=text name=W value='''+str(W)+'''><br />
-    <input type=submit value=送出>
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
+        
+    <form method=POST action=mygeartest>
+    齒數:<input type=text name=N><br />
+    模數:<input type=text name=M><br />
+    壓力角:<input type=text name=P><br />
+    <input type=submit value=send>
     </form>
-    <br /><a href="index">index</a><br />
     </body>
     </html>
     '''
 
         return outstring
     @cherrypy.expose
-    # W 為正方體邊長, 內定值為 10
-    def cubeaction(self, W=10):
+    # N 為齒數, M 為模數, P 為壓力角
+    def threeDgear(self, N=20, M=5, P=15):
         outstring = '''
     <!DOCTYPE html> 
     <html>
     <head>
     <meta http-equiv="content-type" content="text/html;charset=utf-8">
-    <!-- 先載入 pfcUtils.js 與 wl_header.js -->
-    <script type="text/javascript" src="/static/weblink/pfcUtils.js"></script>
-    <script type="text/javascript" src="/static/weblink/wl_header.js">
     <!-- 載入 brython.js -->
     <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
-    document.writeln ("Error loading Pro/Web.Link header!");
-    </script>
-    <script>
-    window.onload=function(){
-    brython();
-    }
-    </script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
     </head>
-    <!-- 不要使用 body 啟動 brython() 改為 window level 啟動 -->
-    <body onload="">
-    <h1>Creo 參數化零件</h1>
-    <a href="index">index</a><br />
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
+        
+    <form method=POST action=do3Dgear>
+    齒數:<input type=text name=N><br />
+    模數:<input type=text name=M><br />
+    壓力角:<input type=text name=P><br />
+    <input type=submit value=send>
+    </form>
+    </body>
+    </html>
+    '''
 
-    <!-- 以下為 Creo Pro/Web.Link 程式, 將 JavaScrip 改為 Brython 程式 -->
-
+        return outstring
+    @cherrypy.expose
+    # N 為齒數, M 為模數, P 為壓力角
+    def do3Dgear(self, N=20, M=5, P=15):
+        outstring = '''
+    <!DOCTYPE html> 
+    <html>
+    <head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
+    </head>
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
+    <!-- 以下為 canvas 畫圖程式 -->
     <script type="text/python">
-    from browser import document, window
+    # 從 browser 導入 document
+    from browser import document
+    import math
+
+    # 畫布指定在名稱為 plotarea 的 canvas 上
+    canvas = document["plotarea"]
+    ctx = canvas.getContext("2d")
+
+    # 用紅色畫一條直線
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    '''
+        outstring += '''
+    ctx.moveTo('''+str(N)+","+str(M)+")"
+        outstring += '''
+    ctx.lineTo(0, 500)
+    ctx.strokeStyle = "red"
+    ctx.stroke()
+
+    # 用藍色再畫一條直線
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    ctx.moveTo(0, 0)
+    ctx.lineTo(500, 0)
+    ctx.strokeStyle = "blue"
+    ctx.stroke()
+
+    # 用綠色再畫一條直線
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    ctx.moveTo(0, 0)
+    ctx.lineTo(500, 500)
+    ctx.strokeStyle = "green"
+    ctx.stroke()
+
+    # 用黑色畫一個圓
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = "black"
+    ctx.arc(250,250,50,0,2*math.pi)
+    ctx.stroke()
+    </script>
+    <canvas id="plotarea" width="800" height="600"></canvas>
+    </body>
+    </html>
+    '''
+
+        return outstring
+    @cherrypy.expose
+    # N 為齒數, M 為模數, P 為壓力角
+    def do3Dgear(self, N=20, M=5, P=15):
+        outstring = '''
+    <!DOCTYPE html> 
+    <html>
+    <head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
+    </head>
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
+    <!-- 以下為 canvas 畫圖程式 -->
+    <script type="text/python">
+    # 從 browser 導入 document
+    from browser import document
+    import math
+
+    # 畫布指定在名稱為 plotarea 的 canvas 上
+    canvas = document["plotarea"]
+    ctx = canvas.getContext("2d")
+
+    # 用紅色畫一條直線
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    '''
+        outstring += '''
+    ctx.moveTo('''+str(N)+","+str(M)+")"
+        outstring += '''
+    ctx.lineTo(0, 500)
+    ctx.strokeStyle = "red"
+    ctx.stroke()
+
+    # 用藍色再畫一條直線
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    ctx.moveTo(0, 0)
+    ctx.lineTo(500, 0)
+    ctx.strokeStyle = "blue"
+    ctx.stroke()
+
+    # 用綠色再畫一條直線
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    ctx.moveTo(0, 0)
+    ctx.lineTo(500, 500)
+    ctx.strokeStyle = "green"
+    ctx.stroke()
+
+    # 用黑色畫一個圓
+    ctx.beginPath()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = "black"
+    ctx.arc(250,250,50,0,2*math.pi)
+    ctx.stroke()
+    </script>
+    <canvas id="plotarea" width="800" height="600"></canvas>
+    </body>
+    </html>
+    '''
+
+        return outstring
+    @cherrypy.expose
+    # N 為齒數, M 為模數, P 為壓力角
+    def mygeartest(self, N=20, M=5, P=15):
+        outstring = '''
+    <!DOCTYPE html> 
+    <html>
+    <head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.0-20150301-090019/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
+    <form method=POST action=mygeartest>
+    齒數:<input type=text name=N><br />
+    模數:<input type=text name=M><br />
+    壓力角:<input type=text name=P><br />
+    <input type=submit value=send>
+    </form>
+    </head>
+
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
+
+    <!-- 以下為 canvas 畫圖程式 -->
+    <script type="text/python">
+    # 從 browser 導入 document
+    from browser import document
     from math import *
 
-    # 這個區域為 Brython 程式範圍, 註解必須採用 Python 格式
-    # 因為 pfcIsWindows() 為原生的 JavaScript 函式, 在 Brython 中引用必須透過 window 物件
-    if (!window.pfcIsWindows()) window.netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-    # 若第三輸入為 false, 表示僅載入 session, 但是不顯示
-    # ret 為 model open return
-    ret = document.pwl.pwlMdlOpen("cube.prt", "v:/tmp", false)
-    if (!ret.Status):
-        window.alert("pwlMdlOpen failed (" + ret.ErrorCode + ")")
-        # 將 ProE 執行階段設為變數 session
-        session = window.pfcGetProESession()
-        # 在視窗中打開零件檔案, 並且顯示出來
-        pro_window = session.OpenFile(pfcCreate("pfcModelDescriptor").CreateFromFileName("cube.prt"))
-        solid = session.GetModel("cube.prt", window.pfcCreate("pfcModelType").MDL_PART)
-        # 在 Brython 中與 Python 語法相同, 只有初值設定問題, 無需宣告變數
-        # length, width, myf, myn, i, j, volume, count, d1Value, d2Value
-        # 將模型檔中的 length 變數設為 javascript 中的 length 變數
-        length = solid.GetParam("a1")
-        # 將模型檔中的 width 變數設為 javascript 中的 width 變數
-        width = solid.GetParam("a2")
-        # 改變零件尺寸
-        # myf=20
-        # myn=20
-        volume = 0
-        count = 0
-        try:
-            # 以下採用 URL 輸入對應變數
-            # createParametersFromArguments ();
-            # 以下則直接利用 javascript 程式改變零件參數
-            for i in range(5):
-                myf ='''+str(W)+'''
-                myn ='''+str(W)+''' + i*2.0
-                # 設定變數值, 利用 ModelItem 中的 CreateDoubleParamValue 轉換成 Pro/Web.Link 所需要的浮點數值
-                d1Value = window.pfcCreate ("MpfcModelItem").CreateDoubleParamValue(myf)
-                d2Value = window.pfcCreate ("MpfcModelItem").CreateDoubleParamValue(myn)
-                # 將處理好的變數值, 指定給對應的零件變數
-                length.Value = d1Value
-                width.Value = d2Value
-                # 零件尺寸重新設定後, 呼叫 Regenerate 更新模型
-                # 在 JavaScript 為 null 在 Brython 為 None
-                solid.Regenerate(None)
-                # 利用 GetMassProperty 取得模型的質量相關物件
-                properties = solid.GetMassProperty(None)
-                # volume = volume + properties.Volume
-                volume = properties.Volume
-                count = count + 1
-                window.alert("執行第"+count+"次,零件總體積:"+volume)
-                # 將零件存為新檔案
-                newfile = document.pwl.pwlMdlSaveAs("cube.prt", "v:/tmp", "cube"+count+".prt")
-                if (!newfile.Status):
-                    window.alert("pwlMdlSaveAs failed (" + newfile.ErrorCode + ")")
-                # window.alert("共執行:"+count+"次,零件總體積:"+volume)
-                # window.alert("零件體積:"+properties.Volume)
-                # window.alert("零件體積取整數:"+Math.round(properties.Volume));
-        except:
-            window.alert ("Exception occurred: "+window.pfcGetExceptionType (err))
+    # 準備在 id="plotarea" 的 canvas 中繪圖
+    canvas = document["plotarea"]
+    ctx = canvas.getContext("2d")
+    '''
+        outstring += '''
+    ctx.moveTo('''+str(N)+","+str(M)+","+str(P)+")"
+        outstring += '''
+
+    def create_line(x1, y1, x2, y2, width=3, fill="red"):
+    	ctx.beginPath()
+    	ctx.lineWidth = width
+    	ctx.moveTo(x1, y1)
+    	ctx.lineTo(x2, y2)
+    	ctx.strokeStyle = fill
+    	ctx.stroke()
+
+    # 導入數學函式後, 圓周率為 pi
+    # deg 為角度轉為徑度的轉換因子
+    deg = pi/180.
+    #
+    # 以下分別為正齒輪繪圖與主 tkinter 畫布繪圖
+    #
+    # 定義一個繪正齒輪的繪圖函式
+    # midx 為齒輪圓心 x 座標
+    # midy 為齒輪圓心 y 座標
+    # rp 為節圓半徑, n 為齒數,a 為模數,p 為壓力角
+    def gear(midx, midy, rp, n,a,p, 顏色):
+        # 將角度轉換因子設為全域變數
+        global deg
+        # 齒輪漸開線分成 15 線段繪製
+        imax = 15
+        # 在輸入的畫布上繪製直線, 由圓心到節圓 y 軸頂點畫一直線
+        create_line(midx, midy, midx, midy-rp)
+        # 畫出 rp 圓, 畫圓函式尚未定義
+        #create_oval(midx-rp, midy-rp, midx+rp, midy+rp, width=2)
+        # a 為模數 (代表公制中齒的大小), 模數為節圓直徑(稱為節徑)除以齒數
+        # 模數也就是齒冠大小
+        a=2*rp/n
+        # d 為齒根大小, 為模數的 1.157 或 1.25倍, 這裡採 1.25 倍
+        d=2.5*rp/n
+        # ra 為齒輪的外圍半徑
+        ra=rp+a
+        print("ra:", ra)
+        # 畫出 ra 圓, 畫圓函式尚未定義
+        #create_oval(midx-ra, midy-ra, midx+ra, midy+ra, width=1)
+        # rb 則為齒輪的基圓半徑
+        # 基圓為漸開線長齒之基準圓
+        rb=rp*cos(p*deg)
+        print("rp:", rp)
+        print("rb:", rb)
+        # 畫出 rb 圓 (基圓), 畫圓函式尚未定義
+        #create_oval(midx-rb, midy-rb, midx+rb, midy+rb, width=1)
+        # rd 為齒根圓半徑
+        rd=rp-d
+        # 當 rd 大於 rb 時
+        print("rd:", rd)
+        # 畫出 rd 圓 (齒根圓), 畫圓函式尚未定義
+        #create_oval(midx-rd, midy-rd, midx+rd, midy+rd, width=1)
+        # dr 則為基圓到齒頂圓半徑分成 imax 段後的每段半徑增量大小
+        # 將圓弧分成 imax 段來繪製漸開線
+        dr=(ra-rb)/imax
+        # tan(20*deg)-20*deg 為漸開線函數
+        sigma=pi/(2*n)+tan(20*deg)-20*deg
+        for j in range(n):
+            ang=-2.*j*pi/n+sigma
+            ang2=2.*j*pi/n+sigma
+            lxd=midx+rd*sin(ang2-2.*pi/n)
+            lyd=midy-rd*cos(ang2-2.*pi/n)
+            #for(i=0;i<=imax;i++):
+            for i in range(imax+1):
+                r=rb+i*dr
+                theta=sqrt((r*r)/(rb*rb)-1.)
+                alpha=theta-atan(theta)
+                xpt=r*sin(alpha-ang)
+                ypt=r*cos(alpha-ang)
+                xd=rd*sin(-ang)
+                yd=rd*cos(-ang)
+                # i=0 時, 繪線起點由齒根圓上的點, 作為起點
+                if(i==0):
+                    last_x = midx+xd
+                    last_y = midy-yd
+                # 由左側齒根圓作為起點, 除第一點 (xd,yd) 齒根圓上的起點外, 其餘的 (xpt,ypt)則為漸開線上的分段點
+                create_line((midx+xpt),(midy-ypt),(last_x),(last_y),fill=顏色)
+                # 最後一點, 則為齒頂圓
+                if(i==imax):
+                    lfx=midx+xpt
+                    lfy=midy-ypt
+                last_x = midx+xpt
+                last_y = midy-ypt
+            # the line from last end of dedendum point to the recent
+            # end of dedendum point
+            # lxd 為齒根圓上的左側 x 座標, lyd 則為 y 座標
+            # 下列為齒根圓上用來近似圓弧的直線
+            create_line((lxd),(lyd),(midx+xd),(midy-yd),fill=顏色)
+            #for(i=0;i<=imax;i++):
+            for i in range(imax+1):
+                r=rb+i*dr
+                theta=sqrt((r*r)/(rb*rb)-1.)
+                alpha=theta-atan(theta)
+                xpt=r*sin(ang2-alpha)
+                ypt=r*cos(ang2-alpha)
+                xd=rd*sin(ang2)
+                yd=rd*cos(ang2)
+                # i=0 時, 繪線起點由齒根圓上的點, 作為起點
+                if(i==0):
+                    last_x = midx+xd
+                    last_y = midy-yd
+                # 由右側齒根圓作為起點, 除第一點 (xd,yd) 齒根圓上的起點外, 其餘的 (xpt,ypt)則為漸開線上的分段點
+                create_line((midx+xpt),(midy-ypt),(last_x),(last_y),fill=顏色)
+                # 最後一點, 則為齒頂圓
+                if(i==imax):
+                    rfx=midx+xpt
+                    rfy=midy-ypt
+                last_x = midx+xpt
+                last_y = midy-ypt
+            # lfx 為齒頂圓上的左側 x 座標, lfy 則為 y 座標
+            # 下列為齒頂圓上用來近似圓弧的直線
+            create_line(lfx,lfy,rfx,rfy,fill=顏色)
+
+    gear(300,400,200,'''+str(N)+","+str(M)+","+str(P)+''',"red")
+    gear(700,400,100,'''+str(N)+","+str(M)+","+str(P)+''',"red")
     </script>
+    <canvas id="plotarea" width="800" height="800"></canvas>
+    </body>
+    </html>
     '''
 
+        return outstring
+    @cherrypy.expose
+    # N 為齒數, M 為模數, P 為壓力角
+    def mygeartest2(self, N=20, m=None, p=None,z=None,x=None,c=None,v=None,b=None,d=None):
+        outstring = '''
+    <!DOCTYPE html> 
+    <html>
+    <head>
+    <title>2015cda_g1</title>
+    </head>
+    <body>
+    <select name="select">
+      <option>2015cda_g1齒輪</option>
+      <optgroup label="組長">
+      <option value="組長" style="color:blue;font-weight:bold" >40223101王汎亦</option>
+    </optgroup>
+      <optgroup label="組員">
+      <option value="PT" style="background-color: #CCFFFF;" >40223115吳欣融</option>
+      <option value="ST" style="background-color: #CCFF66;" >40223117李曜州</option>
+      <option value="TU" style="background-color: #FFFF66;" >40223119易柏翔</option>
+      <option value="HL" style="background-color: #FFCC66;">40223136黃金振</option>
+      <option value="AG" style="background-color: #FF9966;" >40023256蕭閔鍵</option>
+    </select>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.1-20150328-091302/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
+    <form method=POST action=mygeartest2>
+    40223101繪製第1齒數:<input type=text name=z><br />
+    40023256繪製第2齒數:<input type=text name=x><br />
+    40223119繪製第3齒數:<input type=text name=c><br />
+    40223115繪製第4齒數:<input type=text name=v><br />
+    40223117繪製第5齒數:<input type=text name=b><br />
+    40223136繪製第6齒數:<input type=text name=d><br />
+    壓力角:<input type=text name=p><br />
+    模數:<input type=text name=m><br />
+    <input type=submit value=send>
+    </head>
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
+
+    <!-- 以下為 canvas 畫圖程式 -->
+    <script type="text/python">
+    # 從 browser 導入 document
+    from browser import document
+    from math import *
+    # 請注意, 這裡導入位於 Lib/site-packages 目錄下的 spur.py 檔案
+    import spur
+
+    # 準備在 id="plotarea" 的 canvas 中繪圖
+    canvas = document["plotarea"]
+    ctx = canvas.getContext("2d")
+
+    # 以下利用 spur.py 程式進行繪圖, 接下來的協同設計運算必須要配合使用者的需求進行設計運算與繪圖
+    # 其中並將工作分配給其他組員建立類似 spur.py 的相關零件繪圖模組
+    # midx, midy 為齒輪圓心座標, rp 為節圓半徑, n 為齒數, pa 為壓力角, color 為線的顏色
+    # Gear(midx, midy, rp, n=20, pa=20, color="black"):
+    # 模數決定齒的尺寸大小, 囓合齒輪組必須有相同的模數與壓力角
+    # 壓力角 pa 單位為角度
+    pa ='''+str(p)+'''
+    # m 為模數
+    m = '''+str(m)+'''
+    # 第1齒輪齒數
+    n_g1 = '''+str(z)+'''
+    # 第2齒輪齒數
+    n_g2 = '''+str(x)+'''
+    # 第3齒輪齒數
+    n_g3 = '''+str(c)+'''
+    # 第4齒輪齒數
+    n_g4 = '''+str(v)+'''
+    # 第5齒輪齒數
+    n_g5 = '''+str(b)+'''
+    # 第6齒輪齒數
+    n_g6 = '''+str(d)+'''
+    # 計算兩齒輪的節圓半徑
+    rp_g1 = m*n_g1/2
+    rp_g2 = m*n_g2/2
+    rp_g3 = m*n_g3/2
+    rp_g4 = m*n_g4/2
+    rp_g5 = m*n_g5/2
+    rp_g6 = m*n_g6/2
+
+    # 繪圖第1齒輪的圓心座標
+    x_g1 = 400
+    y_g1 = 400
+    # 第2齒輪的圓心座標, 假設排列成水平, 表示各齒輪圓心 y 座標相同
+    x_g2 = x_g1 + rp_g1 + rp_g2
+    y_g2 = y_g1
+    # 第3齒輪的圓心座標
+    x_g3 = x_g1 + rp_g1 + 2*rp_g2 + rp_g3
+    y_g3 = y_g1
+    # 第4齒輪的圓心座標
+    x_g4 = x_g1 + rp_g1 +2*rp_g2+ 2*rp_g3 +rp_g4
+    y_g4 = y_g1
+    # 第5齒輪的圓心座標
+    x_g5 = x_g1 + rp_g1 +2*rp_g2+2* rp_g3 +2*rp_g4+rp_g5
+    y_g5 = y_g1
+    # 第6齒輪的圓心座標
+    x_g6 = x_g1 + rp_g1 +2*rp_g2+ 2*rp_g3 +2*rp_g4+2*rp_g5+rp_g6
+    y_g6 = y_g1
+    # 將第1齒輪順時鐘轉 90 度
+    # 使用 ctx.save() 與 ctx.restore() 以確保各齒輪以相對座標進行旋轉繪圖
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g1, y_g1)
+    # rotate to engage
+    ctx.rotate(pi/2)
+    # put it back
+    ctx.translate(-x_g1, -y_g1)
+    spur.Spur(ctx).Gear(x_g1, y_g1, rp_g1, n_g1, pa, "blue")
+    ctx.restore()
+
+    # 將第2齒輪逆時鐘轉 90 度之後, 再多轉一齒, 以便與第1齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g2, y_g2)
+    # rotate to engage
+    ctx.rotate(-pi/2-pi/n_g2)
+    # put it back
+    ctx.translate(-x_g2, -y_g2)
+    spur.Spur(ctx).Gear(x_g2, y_g2, rp_g2, n_g2, pa, "black")
+    ctx.restore()
+
+    # 將第3齒輪逆時鐘轉 90 度之後, 再往回轉第2齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g3, y_g3)
+    # rotate to engage
+    # pi+pi/n_g2 為第2齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第3齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g3 則是第3齒與第2齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g2)*n_g2/n_g3 則是第2齒原定位線為順時鐘轉動 90 度, 
+    # 但是第2齒輪為了與第1齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第2齒輪的一齒角度, 因為要帶動第3齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g3
+    ctx.rotate(-pi/2-pi/n_g3+(pi+pi/n_g2)*n_g2/n_g3)
+    # put it back
+    ctx.translate(-x_g3, -y_g3)
+    spur.Spur(ctx).Gear(x_g3, y_g3, rp_g3, n_g3, pa, "red")
+    ctx.restore()
+
+    # 將第4齒輪逆時鐘轉 90 度之後, 再往回轉第1齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g4, y_g4)
+    # rotate to engage
+    # pi+pi/n_g3 為第3齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第4齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g4 則是第4齒與第3齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g3)*n_g3/n_g4 則是第3齒原定位線為順時鐘轉動 90 度, 
+    # 但是第4齒輪為了與第3齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第3齒輪的一齒角度, 因為要帶動第4齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g4
+    ctx.rotate(-pi/2-pi/n_g4+(pi+pi/n_g3-(pi+pi/n_g2)*n_g2/n_g3)*n_g3/n_g4)
+    # put it back
+    ctx.translate(-x_g4, -y_g4)
+    spur.Spur(ctx).Gear(x_g4, y_g4, rp_g4, n_g4, pa, "Orange")
+    ctx.restore()
+    # 按照上面三個正齒輪的囓合轉角運算, 隨後的傳動齒輪轉角便可依此類推, 完成6個齒輪的囓合繪圖
+
+    # 將第5齒輪逆時鐘轉 90 度之後, 再往回轉第2齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g5, y_g5)
+    # rotate to engage
+    # pi+pi/n_g 為第2齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第3齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g5 則是第3齒與第2齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g4)*n_g4/n_g5 則是第2齒原定位線為順時鐘轉動 90 度, 
+    # 但是第2齒輪為了與第1齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第2齒輪的一齒角度, 因為要帶動第3齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g5
+    ctx.rotate(-pi/2-pi/n_g5+(pi+pi/n_g4-(pi+pi/n_g3-(pi+pi/n_g2)*n_g2/n_g3)*n_g3/n_g4)*n_g4/n_g5)
+    # put it back
+    ctx.translate(-x_g5, -y_g5)
+    spur.Spur(ctx).Gear(x_g5, y_g5, rp_g5, n_g5, pa, "green")
+    ctx.restore()
+    # 按照上面三個正齒輪的囓合轉角運算, 隨後的傳動齒輪轉角便可依此類推, 完成6個齒輪的囓合繪圖
+
+    # 將第6齒輪逆時鐘轉 90 度之後, 再往回轉第2齒輪定位帶動轉角, 然後再逆時鐘多轉一齒, 以便與第2齒輪進行囓合
+    ctx.save()
+    # translate to the origin of second gear
+    ctx.translate(x_g6, y_g6)
+    # rotate to engage
+    # pi+pi/n_g 為第2齒輪從順時鐘轉 90 度之後, 必須配合目前的標記線所作的齒輪 2 轉動角度, 要轉換到齒輪3 的轉動角度
+    # 必須乘上兩齒輪齒數的比例, 若齒輪2 大, 則齒輪3 會轉動較快
+    # 第1個 -pi/2 為將原先垂直的第3齒輪定位線逆時鐘旋轉 90 度
+    # -pi/n_g6 則是第3齒與第2齒定位線重合後, 必須再逆時鐘多轉一齒的轉角, 以便進行囓合
+    # (pi+pi/n_g4)*n_g5/n_g6 則是第2齒原定位線為順時鐘轉動 90 度, 
+    # 但是第2齒輪為了與第1齒輪囓合, 已經距離定位線, 多轉了 180 度, 再加上第2齒輪的一齒角度, 因為要帶動第3齒輪定位, 
+    # 這個修正角度必須要再配合第2齒與第3齒的轉速比加以轉換成第3齒輪的轉角, 因此乘上 n_g2/n_g6
+    ctx.rotate(-pi/2-pi/n_g6+(pi+pi/n_g5-(pi+pi/n_g4-(pi+pi/n_g3-(pi+pi/n_g2)*n_g2/n_g3)*n_g3/n_g4)*n_g4/n_g5)*n_g5/n_g6)
+    # put it back
+    ctx.translate(-x_g6, -y_g6)
+    spur.Spur(ctx).Gear(x_g6, y_g6, rp_g6, n_g6, pa, "Purple")
+    ctx.restore()
+    # 按照上面三個正齒輪的囓合轉角運算, 隨後的傳動齒輪轉角便可依此類推, 完成6個齒輪的囓合繪圖
+    </script>
+    <canvas id="plotarea" width="3000" height="3000"></canvas>
+    </body>
+    </html>
+    '''
+
+        return outstring
+    @cherrypy.expose
+    # N 為齒數, M 為模數, P 為壓力角
+    def mygeartest(self, N=20, M=5, P=15):
+        outstring = '''
+    <!DOCTYPE html> 
+    <html>
+    <head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <!-- 載入 brython.js -->
+    <script type="text/javascript" src="/static/Brython3.1.0-20150301-090019/brython.js"></script>
+    <script src="/static/Cango2D.js" type="text/javascript"></script>
+    <script src="/static/gearUtils-04.js" type="text/javascript"></script>
+    <form method=POST action=mygeartest>
+    齒數:<input type=text name=N><br />
+    模數:<input type=text name=M><br />
+    壓力角:<input type=text name=P><br />
+    <input type=submit value=send>
+    </form>
+    </head>
+
+    <!-- 啟動 brython() -->
+    <body onload="brython()">
+
+    <!-- 以下為 canvas 畫圖程式 -->
+    <script type="text/python">
+    # 從 browser 導入 document
+    from browser import document
+    from math import *
+
+    # 準備在 id="plotarea" 的 canvas 中繪圖
+    canvas = document["plotarea"]
+    ctx = canvas.getContext("2d")
+    '''
+        outstring += '''
+    ctx.moveTo('''+str(N)+","+str(M)+","+str(P)+")"
+        outstring += '''
+
+    def create_line(x1, y1, x2, y2, width=3, fill="red"):
+    	ctx.beginPath()
+    	ctx.lineWidth = width
+    	ctx.moveTo(x1, y1)
+    	ctx.lineTo(x2, y2)
+    	ctx.strokeStyle = fill
+    	ctx.stroke()
+
+    # 導入數學函式後, 圓周率為 pi
+    # deg 為角度轉為徑度的轉換因子
+    deg = pi/180.
+    #
+    # 以下分別為正齒輪繪圖與主 tkinter 畫布繪圖
+    #
+    # 定義一個繪正齒輪的繪圖函式
+    # midx 為齒輪圓心 x 座標
+    # midy 為齒輪圓心 y 座標
+    # rp 為節圓半徑, n 為齒數,a 為模數,p 為壓力角
+    def gear(midx, midy, rp, n,a,p, 顏色):
+        # 將角度轉換因子設為全域變數
+        global deg
+        # 齒輪漸開線分成 15 線段繪製
+        imax = 15
+        # 在輸入的畫布上繪製直線, 由圓心到節圓 y 軸頂點畫一直線
+        create_line(midx, midy, midx, midy-rp)
+        # 畫出 rp 圓, 畫圓函式尚未定義
+        #create_oval(midx-rp, midy-rp, midx+rp, midy+rp, width=2)
+        # a 為模數 (代表公制中齒的大小), 模數為節圓直徑(稱為節徑)除以齒數
+        # 模數也就是齒冠大小
+        a=2*rp/n
+        # d 為齒根大小, 為模數的 1.157 或 1.25倍, 這裡採 1.25 倍
+        d=2.5*rp/n
+        # ra 為齒輪的外圍半徑
+        ra=rp+a
+        print("ra:", ra)
+        # 畫出 ra 圓, 畫圓函式尚未定義
+        #create_oval(midx-ra, midy-ra, midx+ra, midy+ra, width=1)
+        # rb 則為齒輪的基圓半徑
+        # 基圓為漸開線長齒之基準圓
+        rb=rp*cos(p*deg)
+        print("rp:", rp)
+        print("rb:", rb)
+        # 畫出 rb 圓 (基圓), 畫圓函式尚未定義
+        #create_oval(midx-rb, midy-rb, midx+rb, midy+rb, width=1)
+        # rd 為齒根圓半徑
+        rd=rp-d
+        # 當 rd 大於 rb 時
+        print("rd:", rd)
+        # 畫出 rd 圓 (齒根圓), 畫圓函式尚未定義
+        #create_oval(midx-rd, midy-rd, midx+rd, midy+rd, width=1)
+        # dr 則為基圓到齒頂圓半徑分成 imax 段後的每段半徑增量大小
+        # 將圓弧分成 imax 段來繪製漸開線
+        dr=(ra-rb)/imax
+        # tan(20*deg)-20*deg 為漸開線函數
+        sigma=pi/(2*n)+tan(20*deg)-20*deg
+        for j in range(n):
+            ang=-2.*j*pi/n+sigma
+            ang2=2.*j*pi/n+sigma
+            lxd=midx+rd*sin(ang2-2.*pi/n)
+            lyd=midy-rd*cos(ang2-2.*pi/n)
+            #for(i=0;i<=imax;i++):
+            for i in range(imax+1):
+                r=rb+i*dr
+                theta=sqrt((r*r)/(rb*rb)-1.)
+                alpha=theta-atan(theta)
+                xpt=r*sin(alpha-ang)
+                ypt=r*cos(alpha-ang)
+                xd=rd*sin(-ang)
+                yd=rd*cos(-ang)
+                # i=0 時, 繪線起點由齒根圓上的點, 作為起點
+                if(i==0):
+                    last_x = midx+xd
+                    last_y = midy-yd
+                # 由左側齒根圓作為起點, 除第一點 (xd,yd) 齒根圓上的起點外, 其餘的 (xpt,ypt)則為漸開線上的分段點
+                create_line((midx+xpt),(midy-ypt),(last_x),(last_y),fill=顏色)
+                # 最後一點, 則為齒頂圓
+                if(i==imax):
+                    lfx=midx+xpt
+                    lfy=midy-ypt
+                last_x = midx+xpt
+                last_y = midy-ypt
+            # the line from last end of dedendum point to the recent
+            # end of dedendum point
+            # lxd 為齒根圓上的左側 x 座標, lyd 則為 y 座標
+            # 下列為齒根圓上用來近似圓弧的直線
+            create_line((lxd),(lyd),(midx+xd),(midy-yd),fill=顏色)
+            #for(i=0;i<=imax;i++):
+            for i in range(imax+1):
+                r=rb+i*dr
+                theta=sqrt((r*r)/(rb*rb)-1.)
+                alpha=theta-atan(theta)
+                xpt=r*sin(ang2-alpha)
+                ypt=r*cos(ang2-alpha)
+                xd=rd*sin(ang2)
+                yd=rd*cos(ang2)
+                # i=0 時, 繪線起點由齒根圓上的點, 作為起點
+                if(i==0):
+                    last_x = midx+xd
+                    last_y = midy-yd
+                # 由右側齒根圓作為起點, 除第一點 (xd,yd) 齒根圓上的起點外, 其餘的 (xpt,ypt)則為漸開線上的分段點
+                create_line((midx+xpt),(midy-ypt),(last_x),(last_y),fill=顏色)
+                # 最後一點, 則為齒頂圓
+                if(i==imax):
+                    rfx=midx+xpt
+                    rfy=midy-ypt
+                last_x = midx+xpt
+                last_y = midy-ypt
+            # lfx 為齒頂圓上的左側 x 座標, lfy 則為 y 座標
+            # 下列為齒頂圓上用來近似圓弧的直線
+            create_line(lfx,lfy,rfx,rfy,fill=顏色)
+
+    gear(300,400,200,'''+str(N)+","+str(M)+","+str(P)+''',"red")
+    gear(700,400,100,'''+str(N)+","+str(M)+","+str(P)+''',"red")
+    </script>
+    <canvas id="plotarea" width="1000" height="1000"></canvas>
+    </body>
+    </html>
+    '''
+
+        return outstring
+    @cherrypy.expose
+    def doCheck(self, guess=None):
+        # 假如使用者直接執行 doCheck, 則設法轉回根方法
+        if guess is None:
+            raise cherrypy.HTTPRedirect("/")
+        # 從 session 取出 answer 對應資料, 且處理直接執行 doCheck 時無法取 session 值情況
+        try:
+            theanswer = int(cherrypy.session.get('answer'))
+        except:
+            raise cherrypy.HTTPRedirect("/")
+        # 經由表單所取得的 guess 資料型別為 string
+        try:
+            theguess = int(guess)
+        except:
+            return "error " + self.guessform()
+        # 每執行 doCheck 一次,次數增量一次
+        cherrypy.session['count']  += 1
+        # 答案與所猜數字進行比對
+        if theanswer < theguess:
+            return "big " + self.guessform()
+        elif theanswer > theguess:
+            return "small " + self.guessform()
+        else:
+            # 已經猜對, 從 session 取出累計猜測次數
+            thecount = cherrypy.session.get('count')
+            return "exact: <a href=''>再猜</a>"
+    def guessform(self):
+        # 印出讓使用者輸入的超文件表單
+        outstring = str(cherrypy.session.get('answer')) + "/" + str(cherrypy.session.get('count')) + '''<form method=POST action=doCheck>
+    請輸入您所猜的整數:<input type=text name=guess><br />
+    <input type=submit value=send>
+    </form>'''
         return outstring
     @cherrypy.expose
     def fileuploadform(self):
@@ -494,10 +1257,12 @@ application_conf = {'/static':{
         'tools.staticdir.dir': data_dir+"/images"}
     }
     
-root = Midterm()
+root = Hello()
 root.download = Download()
 root.man = man.MAN()
 root.man2 = man2.MAN()
+
+
 
 #root.gear = gear.Gear()
 
